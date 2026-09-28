@@ -24,9 +24,11 @@ import {
 import * as styles from './styles.css';
 
 const isHaloDocsEmbedded =
-  (globalThis as typeof globalThis & {
-    __HALO_DOCS_COMPILED_PACKAGE__?: boolean;
-  }).__HALO_DOCS_COMPILED_PACKAGE__ === true;
+  (
+    globalThis as typeof globalThis & {
+      __HALO_DOCS_COMPILED_PACKAGE__?: boolean;
+    }
+  ).__HALO_DOCS_COMPILED_PACKAGE__ === true;
 const hasHaloDocsNav = () =>
   !!(globalThis as typeof globalThis & { __HALO_DOCS_NAV__?: HTMLElement })
     .__HALO_DOCS_NAV__;
@@ -103,8 +105,15 @@ const BrowserLayout = ({
 
   return (
     <div className={styles.browserAppViewContainer}>
-      {(!isHaloDocsEmbedded || !hasHaloDocsNav()) &&
-        (fallback ? <AppSidebarFallback /> : isInWorkspace && <RootAppSidebar />)}
+      {/* Embedded in HALO, the sidebar is drawn only when HALO hands over its own side nav: RootAppSidebar portals
+          itself there. Without one (a phone, a collapsed side nav) the embed keeps no sidebar, as before. */}
+      {isHaloDocsEmbedded ? (
+        hasHaloDocsNav() && !fallback && isInWorkspace && <RootAppSidebar />
+      ) : fallback ? (
+        <AppSidebarFallback />
+      ) : (
+        isInWorkspace && <RootAppSidebar />
+      )}
       <MainContainer>{children}</MainContainer>
     </div>
   );
