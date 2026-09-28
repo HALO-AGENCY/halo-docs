@@ -136,6 +136,7 @@ if (!mainScript) throw new Error('Rspack output has no browser entry script');
 const textFiles = readdirSync(output, { recursive: true })
   .map(file => resolve(output, String(file)))
   .filter(file => /\.(?:css|js|html|map)$/.test(file));
+let workerUrlRewritten = false;
 for (const file of textFiles) {
   let source = readFileSync(file, 'utf8');
   // Source maps and WASM fallbacks can retain the local checkout path. Keep
@@ -172,10 +173,19 @@ for (const file of textFiles) {
       'url:environment.publicPath+"fonts/"+e.url.split("/").pop()',
       'url:(globalThis.__HALO_DOCS_ASSET_BASE__||new URL("./",document.currentScript?.src||location.href).href)+"fonts/"+e.url.split("/").pop()'
     );
-    source = source.replace(
-      'let tj=(0,tr.M)("nbstore");',
-      'let tj=new URL((0,tr.M)("nbstore"),location.href);tj.searchParams.set("halo_docs_backend",globalThis.__HALO_DOCS_WORKER_BACKEND_BASE__||"/halo-docs-backend/");'
-    );
+    // The sync worker's URL carries the host backend base and the worker's content hash. Its file name
+    // (nbstore-<AFFiNE version>.worker.js) does not change between HALO builds, and /halo-docs/ files are cached as
+    // immutable at the edge, so without the hash a rebuilt worker never reached a browser (28 Sep 2026: the edge kept
+    // serving the old one for hours). Minified names change between builds, so match any; fail loudly rather than
+    // ship an unversioned worker again.
+    const workerUrl = /(let |[,;{])(\w+)=\(0,(\w+)\.M\)\("nbstore"\);/;
+    if (workerUrl.test(source)) {
+      source = source.replace(
+        workerUrl,
+        '$1$2=new URL((0,$3.M)("nbstore"),location.href);$2.searchParams.set("halo_docs_backend",globalThis.__HALO_DOCS_WORKER_BACKEND_BASE__||"/halo-docs-backend/");$2.searchParams.set("v","__HALO_DOCS_WORKER_VERSION__");'
+      );
+      workerUrlRewritten = true;
+    }
   }
   if (file.includes('/js/nbstore-') && file.endsWith('.worker.js')) {
     // The nbstore worker owns its HTTP fetches and cannot see the page fetch
@@ -205,6 +215,31 @@ for (const file of textFiles) {
     source = source.replace(/(["'(])\/(?!\/)/g, '$1');
   }
   writeFileSync(file, source);
+}
+
+if (!workerUrlRewritten) {
+  throw new Error(
+    'HALO Docs build: the nbstore worker URL was not found in js/index.*.js; the worker would ship unversioned'
+  );
+}
+{
+  const workers = textFiles.filter(
+    file => file.includes('/js/nbstore-') && file.endsWith('.worker.js')
+  );
+  const workerVersion = createHash('sha256');
+  for (const file of workers) workerVersion.update(readFileSync(file));
+  const version = workerVersion.digest('hex').slice(0, 12);
+  for (const file of textFiles.filter(
+    file => file.includes('/js/index.') && file.endsWith('.js')
+  )) {
+    const source = readFileSync(file, 'utf8');
+    if (source.includes('__HALO_DOCS_WORKER_VERSION__')) {
+      writeFileSync(
+        file,
+        source.replaceAll('__HALO_DOCS_WORKER_VERSION__', version)
+      );
+    }
+  }
 }
 
 writeFileSync(
