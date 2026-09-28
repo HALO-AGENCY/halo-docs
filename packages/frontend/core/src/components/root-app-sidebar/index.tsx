@@ -187,6 +187,9 @@ export const RootAppSidebar = memo((): ReactElement => {
     });
   }, [workspaceDialogService, handleOpenDocs]);
 
+  const nav = (
+    globalThis as typeof globalThis & { __HALO_DOCS_NAV__?: HTMLElement }
+  ).__HALO_DOCS_NAV__;
   const sidebar = (
     <AppSidebar>
       <SidebarContainer>
@@ -255,12 +258,15 @@ export const RootAppSidebar = memo((): ReactElement => {
       </SidebarScrollableContainer>
       <SidebarContainer className={bottomContainer}>
         <SidebarAudioPlayer />
-        {BUILD_CONFIG.isElectron ? <UpdaterButton /> : <AppDownloadButton />}
+        {/* Inside HALO there is no app to download: HALO is the app. */}
+        {BUILD_CONFIG.isElectron ? (
+          <UpdaterButton />
+        ) : nav ? null : (
+          <AppDownloadButton />
+        )}
       </SidebarContainer>
     </AppSidebar>
   );
-  const nav = (globalThis as typeof globalThis & { __HALO_DOCS_NAV__?: HTMLElement })
-    .__HALO_DOCS_NAV__;
   return nav ? createPortal(sidebar, nav) : sidebar;
 });
 

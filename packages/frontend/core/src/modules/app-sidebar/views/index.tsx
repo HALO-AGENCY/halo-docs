@@ -138,6 +138,30 @@ export function AppSidebar({ children }: PropsWithChildren) {
     });
   }, [workbenchService.views$.value]);
 
+  // Embedded in HALO with HALO's side nav handed over, this sidebar is drawn inside that nav (RootAppSidebar portals it
+  // there). HALO's side nav owns the width, collapsing and small screens, so AFFiNE's resize panel, collapse arrow,
+  // floating mode and mask stay out: a plain column that fills the nav.
+  if (
+    (globalThis as typeof globalThis & { __HALO_DOCS_NAV__?: HTMLElement })
+      .__HALO_DOCS_NAV__
+  ) {
+    return (
+      <div
+        className={navWrapperStyle}
+        style={{ width: '100%', height: '100%', position: 'relative' }}
+        data-testid="app-sidebar-wrapper"
+        data-halo-host-nav=""
+        data-open
+      >
+        <nav className={navStyle} data-testid="app-sidebar">
+          <div className={navBodyStyle} data-testid="sliderBar-inner">
+            {children}
+          </div>
+        </nav>
+      </div>
+    );
+  }
+
   return (
     <>
       <ResizePanel
