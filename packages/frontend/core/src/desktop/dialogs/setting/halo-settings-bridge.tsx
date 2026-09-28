@@ -7,6 +7,8 @@
  * sections this publishes in its own rail and hands over the element to draw the chosen one into
  * (utils/halo-docs-host.ts). Rendered by WorkspaceDialogs, so every section has the workspace it needs.
  */
+import { useWorkspaceInfo } from '@affine/core/components/hooks/use-workspace-info';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import {
   closeHaloSettings,
   currentHaloSettingsTarget,
@@ -16,6 +18,7 @@ import {
   publishHaloSettingsSections,
 } from '@affine/core/utils/halo-docs-host';
 import { useI18n } from '@affine/i18n';
+import { useService } from '@toeverything/infra';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -28,6 +31,11 @@ export const HaloSettingsBridge = () => {
   const t = useI18n();
   const generalList = useGeneralSettingList();
   const workspaceList = useWorkspaceSettingList();
+  // AFFiNE lists Storage for everyone, and the server refuses its blob list to anyone who cannot manage the
+  // workspace (workspace_blobs_manage_forbidden, an uncaught error in the section). HALO's staff are collaborators in
+  // their client's workspace, so inside HALO the section is listed only for its owner and admins.
+  const information = useWorkspaceInfo(useService(WorkspaceService).workspace);
+  const canManage = !!(information?.isOwner || information?.isAdmin);
 
   const sections = useMemo<HaloDocsSettingsSections>(
     () => ({
@@ -48,15 +56,17 @@ export const HaloSettingsBridge = () => {
           group: 'general' as const,
           beta: item.beta,
         })),
-        ...workspaceList.map(item => ({
-          key: item.key,
-          title: item.title,
-          group: 'workspace' as const,
-          beta: item.beta,
-        })),
+        ...workspaceList
+          .filter(item => canManage || item.key !== 'workspace:storage')
+          .map(item => ({
+            key: item.key,
+            title: item.title,
+            group: 'workspace' as const,
+            beta: item.beta,
+          })),
       ],
     }),
-    [generalList, workspaceList, t]
+    [generalList, workspaceList, canManage, t]
   );
 
   useEffect(() => {
