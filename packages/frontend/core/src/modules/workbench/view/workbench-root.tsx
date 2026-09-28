@@ -1,6 +1,7 @@
 import { ResizePanel } from '@affine/component/resize-panel';
 import { AffineErrorComponent } from '@affine/core/components/affine/affine-error-boundary/affine-error-fallback';
 import { workbenchRoutes } from '@affine/core/desktop/workbench-router';
+import { HALO_DOCS_EVENTS } from '@affine/core/utils/halo-docs-host';
 import {
   appSettingAtom,
   FrameworkScope,
@@ -37,12 +38,11 @@ const useBindWorkbenchToEmbeddedRouter = (
   _basename: string
 ) => {};
 
-const useAdapter =
-  isHaloDocsEmbedded
-    ? useBindWorkbenchToEmbeddedRouter
-    : BUILD_CONFIG.isElectron
-      ? useBindWorkbenchToDesktopRouter
-      : useBindWorkbenchToBrowserRouter;
+const useAdapter = isHaloDocsEmbedded
+  ? useBindWorkbenchToEmbeddedRouter
+  : BUILD_CONFIG.isElectron
+    ? useBindWorkbenchToDesktopRouter
+    : useBindWorkbenchToBrowserRouter;
 
 const routes: RouteObject[] = [
   {
@@ -57,6 +57,20 @@ export const WorkbenchRoot = memo(() => {
 
   // for debugging
   (window as any).workbench = workbench;
+
+  // HALO drives the workspace from outside: its Docs icon returns to All docs, and its notification bell opens the doc
+  // a notification is about (utils/halo-docs-host.ts). A path relative to the workspace: "/all", "/<docId>".
+  useEffect(() => {
+    const onNavigate = (event: Event) => {
+      const path = (event as CustomEvent<{ path?: string }>).detail?.path;
+      if (typeof path === 'string' && path.startsWith('/')) {
+        workbench.open(path, { at: 'active' });
+      }
+    };
+    window.addEventListener(HALO_DOCS_EVENTS.navigate, onNavigate);
+    return () =>
+      window.removeEventListener(HALO_DOCS_EVENTS.navigate, onNavigate);
+  }, [workbench]);
 
   const views = useLiveData(workbench.views$);
 

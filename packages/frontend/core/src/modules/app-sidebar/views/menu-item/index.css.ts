@@ -46,6 +46,14 @@ export const root = style({
       paddingLeft: '8px',
       paddingRight: '10px',
     },
+    // Inside HALO's side nav the current and hovered rows stay where every other row sits (14 px in), as HALO's own
+    // rows do; AFFiNE's 8 px outward shift put them 6 px in (28 Sep 2026).
+    '[data-halo-host-nav] &[data-collapsible="false"]:is([data-active="true"], :hover)':
+      {
+        width: '100%',
+        transform: 'none',
+        paddingRight: '2px',
+      },
     [`${linkItemRoot}:first-of-type &`]: {
       marginTop: '0px',
     },

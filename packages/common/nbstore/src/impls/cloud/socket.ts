@@ -200,6 +200,16 @@ export function configureSocketAuthMethod(
   authMethod = cb;
 }
 
+/**
+ * HALO: where AFFiNE's Socket.IO lives behind HALO's gateway (`/halo-docs-backend/socket.io`), set by the compiled
+ * worker's preamble (halo/package-build.mjs). Without it the socket opened at the origin's `/socket.io`, whose websocket
+ * upgrade HALO's door refuses: the first upgrade closed, the retry waited 3 s and got a 502, and sync ran over
+ * long-polling, one EU round trip per message (28 Sep 2026: Docs took 10-20 s to start on sisodev).
+ */
+const haloSocketPath = (
+  globalThis as typeof globalThis & { __HALO_DOCS_SOCKET_PATH__?: string }
+).__HALO_DOCS_SOCKET_PATH__;
+
 class SocketManager {
   private readonly socketIOManager: SocketIOManager;
   socket: Socket;
@@ -208,7 +218,17 @@ class SocketManager {
   constructor(endpoint: string, isSelfHosted: boolean) {
     this.socketIOManager = new SocketIOManager(endpoint, {
       autoConnect: false,
-      transports: isSelfHosted ? ['polling', 'websocket'] : ['websocket'], // self-hosted server may not support websocket
+      ...(haloSocketPath
+        ? {
+            // Behind HALO the websocket is known to work: open it first (no polling handshake to upgrade from) and
+            // keep polling only as the fallback.
+            path: haloSocketPath,
+            transports: ['websocket', 'polling'],
+            tryAllTransports: true,
+          }
+        : {
+            transports: isSelfHosted ? ['polling', 'websocket'] : ['websocket'], // self-hosted server may not support websocket
+          }),
       secure: new URL(endpoint).protocol === 'https:',
       // we will handle reconnection by ourselves
       reconnection: false,

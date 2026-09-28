@@ -13,6 +13,7 @@ import type {
   WORKSPACE_DIALOG_SCHEMA,
 } from '@affine/core/modules/dialogs/constant';
 import { GlobalContextService } from '@affine/core/modules/global-context';
+import { reportHaloSettingsTab } from '@affine/core/utils/halo-docs-host';
 import { createIsland, type Island } from '@affine/core/utils/island';
 import { ServerDeploymentType } from '@affine/graphql';
 import { Trans, useTranslation } from '@affine/i18n';
@@ -48,6 +49,11 @@ interface SettingProps extends ModalProps {
   activeTab?: SettingTab;
   onCloseSetting: () => void;
   scrollAnchor?: string;
+  /**
+   * Drawn inside HALO's Settings (halo-settings-bridge.tsx): HALO's own rail lists the sections, so there is no
+   * sidebar here, and HALO chooses the section.
+   */
+  embeddedInHalo?: boolean;
 }
 
 const isWorkspaceSetting = (key: string): boolean =>
@@ -61,10 +67,11 @@ const CenteredLoading = () => {
   );
 };
 
-const SettingModalInner = ({
+export const SettingModalInner = ({
   activeTab: initialActiveTab = 'appearance',
   onCloseSetting,
   scrollAnchor: initialScrollAnchor,
+  embeddedInHalo = false,
 }: SettingProps) => {
   const [subPageIslands, setSubPageIslands] = useState<Island[]>([]);
   const [settingState, setSettingState] = useState<SettingState>({
@@ -171,6 +178,25 @@ const SettingModalInner = ({
     [subPageIslands, addSubPageIsland]
   );
 
+  // Inside HALO the section comes from HALO's rail: follow it. A section that moves to another by itself (a link
+  // inside it, the self-hosted swap below) tells HALO, so HALO's rail follows back.
+  useEffect(() => {
+    if (!embeddedInHalo) return;
+    setSettingState(current =>
+      current.activeTab === initialActiveTab &&
+      current.scrollAnchor === initialScrollAnchor
+        ? current
+        : { activeTab: initialActiveTab, scrollAnchor: initialScrollAnchor }
+    );
+  }, [embeddedInHalo, initialActiveTab, initialScrollAnchor]);
+  useEffect(() => {
+    if (embeddedInHalo && settingState.activeTab !== initialActiveTab) {
+      reportHaloSettingsTab(settingState.activeTab);
+    }
+    // Only a change of the shown section is news to HALO.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embeddedInHalo, settingState.activeTab]);
+
   useEffect(() => {
     if (
       isSelfhosted &&
@@ -199,10 +225,12 @@ const SettingModalInner = ({
       key={`setting-modal-${currentServerId}-${currentLanguageKey}`}
       scope={currentServer.scope}
     >
-      <SettingSidebar
-        activeTab={settingState.activeTab}
-        onTabChange={onTabChange}
-      />
+      {embeddedInHalo ? null : (
+        <SettingSidebar
+          activeTab={settingState.activeTab}
+          onTabChange={onTabChange}
+        />
+      )}
       <SubPageContext.Provider value={contextValue}>
         <Scrollable.Root>
           <Scrollable.Viewport
@@ -233,26 +261,29 @@ const SettingModalInner = ({
                   ) : null}
                 </Suspense>
               </div>
-              <div className={style.footer}>
-                <ContactWithUsIcon fontSize={16} />
-                <Trans
-                  i18nKey={'com.affine.settings.suggestion-2'}
-                  components={{
-                    1: (
-                      <span
-                        className={style.link}
-                        onClick={handleOpenStarAFFiNEModal}
-                      />
-                    ),
-                    2: (
-                      <span
-                        className={style.link}
-                        onClick={handleOpenIssueFeedbackModal}
-                      />
-                    ),
-                  }}
-                />
-              </div>
+              {/* AFFiNE's "star us / report an issue" footer is not HALO's to show. */}
+              {embeddedInHalo ? null : (
+                <div className={style.footer}>
+                  <ContactWithUsIcon fontSize={16} />
+                  <Trans
+                    i18nKey={'com.affine.settings.suggestion-2'}
+                    components={{
+                      1: (
+                        <span
+                          className={style.link}
+                          onClick={handleOpenStarAFFiNEModal}
+                        />
+                      ),
+                      2: (
+                        <span
+                          className={style.link}
+                          onClick={handleOpenIssueFeedbackModal}
+                        />
+                      ),
+                    }}
+                  />
+                </div>
+              )}
               <StarAFFiNEModal
                 open={openStarAFFiNEModal}
                 setOpen={setOpenStarAFFiNEModal}

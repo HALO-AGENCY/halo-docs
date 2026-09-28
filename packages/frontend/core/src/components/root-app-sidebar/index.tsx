@@ -14,6 +14,7 @@ import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
 import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import { CMDKQuickSearchService } from '@affine/core/modules/quicksearch/services/cmdk';
 import type { Workspace } from '@affine/core/modules/workspace';
+import { haloDocsNav } from '@affine/core/utils/halo-docs-host';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type { Store } from '@blocksuite/affine/store';
@@ -39,6 +40,7 @@ import {
 } from '../../desktop/components/navigation-panel';
 import { WorkbenchService } from '../../modules/workbench';
 import { WorkspaceNavigator } from '../workspace-selector';
+import { HaloWorkspaceCard } from './halo-workspace-card';
 import {
   bottomContainer,
   quickSearch,
@@ -187,23 +189,27 @@ export const RootAppSidebar = memo((): ReactElement => {
     });
   }, [workspaceDialogService, handleOpenDocs]);
 
-  const nav = (
-    globalThis as typeof globalThis & { __HALO_DOCS_NAV__?: HTMLElement }
-  ).__HALO_DOCS_NAV__;
+  // Inside HALO's side nav, HALO owns the workspace (one per client), the account, Settings and the notification bell:
+  // Docs' sidebar keeps its own rows and hands those over (utils/halo-docs-host.ts).
+  const nav = haloDocsNav();
   const sidebar = (
     <AppSidebar>
       <SidebarContainer>
         <div className={workspaceAndUserWrapper}>
           <div className={workspaceWrapper}>
-            <WorkspaceNavigator
-              showEnableCloudButton
-              showSyncStatus
-              open={workspaceSelectorOpen}
-              onOpenChange={onWorkspaceSelectorOpenChange}
-              dense
-            />
+            {nav ? (
+              <HaloWorkspaceCard />
+            ) : (
+              <WorkspaceNavigator
+                showEnableCloudButton
+                showSyncStatus
+                open={workspaceSelectorOpen}
+                onOpenChange={onWorkspaceSelectorOpenChange}
+                dense
+              />
+            )}
           </div>
-          <UserInfo />
+          {nav ? null : <UserInfo />}
         </div>
         <div className={quickSearchAndNewPage}>
           <QuickSearchInput
@@ -216,17 +222,19 @@ export const RootAppSidebar = memo((): ReactElement => {
         </div>
         <AllDocsButton />
         <AppSidebarJournalButton />
-        {sessionStatus === 'authenticated' && <NotificationButton />}
+        {sessionStatus === 'authenticated' && !nav && <NotificationButton />}
         <AIChatButton />
-        <MenuItem
-          data-testid="slider-bar-workspace-setting-button"
-          icon={<SettingsIcon />}
-          onClick={onOpenSettingModal}
-        >
-          <span data-testid="settings-modal-trigger">
-            {t['com.affine.settingSidebar.title']()}
-          </span>
-        </MenuItem>
+        {nav ? null : (
+          <MenuItem
+            data-testid="slider-bar-workspace-setting-button"
+            icon={<SettingsIcon />}
+            onClick={onOpenSettingModal}
+          >
+            <span data-testid="settings-modal-trigger">
+              {t['com.affine.settingSidebar.title']()}
+            </span>
+          </MenuItem>
+        )}
       </SidebarContainer>
       <SidebarScrollableContainer>
         <NavigationPanelFavorites />
