@@ -242,10 +242,24 @@ if (!workerUrlRewritten) {
   }
 }
 
+// The loader fetches the entry scripts and stylesheets by these URLs. Their names were hashed by Rspack BEFORE the
+// rewrites above, so a change to this script alone changes their content under the same name, and /halo-docs/ is
+// cached as immutable at the edge (28 Sep 2026: index.57df345c.js stayed the previous build's at the edge). Each URL
+// carries the hash of the file as shipped.
+const shippedVersion = href =>
+  createHash('sha256')
+    .update(readFileSync(resolve(output, href.replace(/^\//, ''))))
+    .digest('hex')
+    .slice(0, 12);
+const versionedAssets = {
+  scripts: scripts.map(src => `${src}?v=${shippedVersion(src)}`),
+  styles: styles.map(href => `${href}?v=${shippedVersion(href)}`),
+};
+
 writeFileSync(
   resolve(output, 'halo-docs-module.js'),
   `
-const assets = ${JSON.stringify({ scripts, styles })};
+const assets = ${JSON.stringify(versionedAssets)};
 const assetBase = new URL('./', import.meta.url);
 globalThis.__HALO_DOCS_COMPILED_PACKAGE__ = true;
 globalThis.__HALO_DOCS_ASSET_BASE__ = assetBase.href;
