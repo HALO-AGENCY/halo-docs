@@ -27,6 +27,9 @@ const isHaloDocsEmbedded =
   (globalThis as typeof globalThis & {
     __HALO_DOCS_COMPILED_PACKAGE__?: boolean;
   }).__HALO_DOCS_COMPILED_PACKAGE__ === true;
+const hasHaloDocsNav = () =>
+  !!(globalThis as typeof globalThis & { __HALO_DOCS_NAV__?: HTMLElement })
+    .__HALO_DOCS_NAV__;
 
 export const AppContainer = ({
   children,
@@ -100,7 +103,7 @@ const BrowserLayout = ({
 
   return (
     <div className={styles.browserAppViewContainer}>
-      {!isHaloDocsEmbedded &&
+      {(!isHaloDocsEmbedded || !hasHaloDocsNav()) &&
         (fallback ? <AppSidebarFallback /> : isInWorkspace && <RootAppSidebar />)}
       <MainContainer>{children}</MainContainer>
     </div>

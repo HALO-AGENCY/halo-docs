@@ -27,6 +27,7 @@ import {
 import { useLiveData, useService, useServices } from '@toeverything/infra';
 import type { ReactElement } from 'react';
 import { memo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 import {
   CollapsibleSection,
@@ -186,7 +187,7 @@ export const RootAppSidebar = memo((): ReactElement => {
     });
   }, [workspaceDialogService, handleOpenDocs]);
 
-  return (
+  const sidebar = (
     <AppSidebar>
       <SidebarContainer>
         <div className={workspaceAndUserWrapper}>
@@ -258,6 +259,9 @@ export const RootAppSidebar = memo((): ReactElement => {
       </SidebarContainer>
     </AppSidebar>
   );
+  const nav = (globalThis as typeof globalThis & { __HALO_DOCS_NAV__?: HTMLElement })
+    .__HALO_DOCS_NAV__;
+  return nav ? createPortal(sidebar, nav) : sidebar;
 });
 
 RootAppSidebar.displayName = 'memo(RootAppSidebar)';

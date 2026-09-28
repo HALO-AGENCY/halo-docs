@@ -12,6 +12,7 @@ import {
 
 export interface HaloDocsMountOptions {
   host: HaloDocsHostContext;
+  nav?: HTMLElement;
   backendBase?: string;
   initialPath?: string;
 }
@@ -20,6 +21,7 @@ type HaloDocsGlobals = typeof globalThis & {
   __HALO_DOCS_COMPILED_PACKAGE__?: boolean;
   __HALO_DOCS_INITIAL_PATH__?: string;
   __HALO_DOCS_HOST__?: HaloDocsHostContext;
+  __HALO_DOCS_NAV__?: HTMLElement;
   HaloDocsModule?: { mount: typeof mountHaloDocs };
 };
 
@@ -64,6 +66,7 @@ export function mountHaloDocs(
 ) {
   const globals = globalThis as HaloDocsGlobals;
   globals.__HALO_DOCS_HOST__ = options.host;
+  globals.__HALO_DOCS_NAV__ = options.nav;
   globals.__HALO_DOCS_INITIAL_PATH__ =
     options.initialPath ??
     `/workspace/${options.host.identity.workspaceId}/all`;
@@ -83,6 +86,9 @@ export function mountHaloDocs(
     root.unmount();
     removeRequestBridge();
     delete globals.__HALO_DOCS_INITIAL_PATH__;
+    if (globals.__HALO_DOCS_NAV__ === options.nav) {
+      delete globals.__HALO_DOCS_NAV__;
+    }
     if (globals.__HALO_DOCS_HOST__ === options.host) {
       delete globals.__HALO_DOCS_HOST__;
     }
