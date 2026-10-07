@@ -370,7 +370,8 @@ export const cardPreviewContainer = style({
     [`${cardViewRoot}[data-view="grid"] &`]: {
       flexGrow: 0,
       minHeight: 0,
-      WebkitLineClamp: 2,
+      WebkitLineClamp: 3,
+      color: cssVarV2.text.secondary,
     },
     // With a cover the compact card shows cover, title and footer only.
     [`${cardViewRoot}[data-view="grid"][data-has-cover] &`]: {
@@ -392,6 +393,17 @@ export const cardViewFooter = style({
   gap: 8,
   minHeight: 24,
   marginTop: 'auto',
+});
+// HALO gallery footer text: "Updated 8h ago", left of the star and menu.
+export const gridCardUpdated = style({
+  flex: '1 1 auto',
+  minWidth: 0,
+  fontSize: 12,
+  lineHeight: '20px',
+  color: cssVarV2.text.secondary,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 });
 export const cardViewActions = style({
   display: 'flex',

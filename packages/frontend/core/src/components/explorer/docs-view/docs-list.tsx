@@ -76,10 +76,11 @@ const GroupHeader = memo(function GroupHeader({
 });
 
 const ratios = [1.26, 1.304, 1.13, 1.391, 1.521];
-// HALO: gallery (grid) cards have one fixed, compact height so three rows fit
-// in a laptop-sized window, whatever the column width. Title, one preview line
-// pair and the footer fit; a cover fills the space above the title instead.
-const GRID_CARD_HEIGHT = 140;
+// HALO: gallery (grid) cards have one fixed height, whatever the column width,
+// so every footer sits on the same line. 210px (Cam, 7 Oct: 50% more than the
+// 140px compact card) holds the title, three preview lines and the footer; a
+// cover fills the space above the title instead of the preview.
+const GRID_CARD_HEIGHT = 210;
 const GRID_CARD_GAP = 16;
 const calcCardRatioById = (id: string) => {
   if (!id) {

@@ -13,7 +13,7 @@ import {
 } from '@affine/core/modules/workbench';
 import { WorkspaceService } from '@affine/core/modules/workspace';
 import type { AffineDNDData } from '@affine/core/types/dnd';
-import { useI18n } from '@affine/i18n';
+import { i18nTime, useI18n } from '@affine/i18n';
 import track from '@affine/track';
 import type { DocMeta } from '@blocksuite/affine/store';
 import {
@@ -397,6 +397,24 @@ export const ListViewDoc = ({ docId }: DocListItemProps) => {
   );
 };
 
+/**
+ * HALO gallery footer: only when the doc last changed ("Updated 8h ago"), on
+ * the same line as the star and the menu. A doc never edited since it was made
+ * shows its created date, which is then its last change.
+ */
+const GridCardUpdated = ({ meta }: { meta: Partial<DocMeta> }) => {
+  const t = useI18n();
+  const time = meta.updatedDate ?? meta.createDate;
+  if (!time) return <div className={styles.gridCardUpdated} />;
+  return (
+    <Tooltip content={t.t('updated at', { time: i18nTime(time) })}>
+      <div className={styles.gridCardUpdated}>
+        Updated {i18nTime(time, { relative: true })}
+      </div>
+    </Tooltip>
+  );
+};
+
 const cardMoreMenuContentOptions = {
   side: 'bottom',
   align: 'end',
@@ -426,6 +444,7 @@ export const CardViewDoc = ({ docId }: DocListItemProps) => {
   const workspaceBlobs =
     useService(WorkspaceService).workspace.docCollection.blobSync;
   const coverUrl = useCoverImageUrl(docMeta.headerImage, workspaceBlobs);
+  const hasCover = !!(docMeta.headerImage && coverUrl);
 
   useEffect(() => {
     const x = docMeta.headerImagePositionX ?? 50;
@@ -548,10 +567,10 @@ export const CardViewDoc = ({ docId }: DocListItemProps) => {
       <li
         className={styles.cardViewRoot}
         data-view={view}
-        data-has-cover={docMeta.headerImage && coverUrl ? true : undefined}
+        data-has-cover={hasCover || undefined}
       >
         <DragHandle id={docId} className={styles.cardDragHandle} />
-        {docMeta.headerImage && coverUrl ? (
+        {hasCover ? (
           <div
             className={styles.cardViewCoverViewport}
             data-adjusting={adjustingCover || undefined}
@@ -613,13 +632,26 @@ export const CardViewDoc = ({ docId }: DocListItemProps) => {
             data-testid="doc-list-item-title"
           />
         </header>
-        {docMeta.description ? (
+        {view === 'grid' ? (
+          // HALO gallery: up to three lines of the doc's description, or else
+          // the start of its text. The card height is fixed, so the footer
+          // sits on the same line in every card whatever this holds.
+          hasCover ? null : (
+            <div className={styles.cardPreviewContainer}>
+              {docMeta.description || <RawDocPreview id={docId} />}
+            </div>
+          )
+        ) : docMeta.description ? (
           <div className={styles.cardPreviewContainer}>
             {docMeta.description}
           </div>
         ) : null}
         <footer className={styles.cardViewFooter}>
-          <CardViewProperties docId={docId} />
+          {view === 'grid' ? (
+            <GridCardUpdated meta={docMeta} />
+          ) : (
+            <CardViewProperties docId={docId} />
+          )}
           <div className={styles.cardViewActions}>
             {quickActions.map(action => {
               return (

@@ -8,7 +8,6 @@ import {
   SidebarContainer,
   SidebarScrollableContainer,
 } from '@affine/core/modules/app-sidebar/views';
-import { ExternalMenuLinkItem } from '@affine/core/modules/app-sidebar/views/menu-item/external-menu-link-item';
 import { AuthService, ServerService } from '@affine/core/modules/cloud';
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
 import { FeatureFlagService } from '@affine/core/modules/feature-flag';
@@ -22,7 +21,6 @@ import {
   AiOutlineIcon,
   AllDocsIcon,
   ImportIcon,
-  JournalIcon,
   SettingsIcon,
 } from '@blocksuite/icons/rc';
 import { useLiveData, useService, useServices } from '@toeverything/infra';
@@ -30,14 +28,6 @@ import type { ReactElement } from 'react';
 import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
-import {
-  CollapsibleSection,
-  NavigationPanelCollections,
-  NavigationPanelFavorites,
-  NavigationPanelMigrationFavorites,
-  NavigationPanelOrganize,
-  NavigationPanelTags,
-} from '../../desktop/components/navigation-panel';
 import { WorkbenchService } from '../../modules/workbench';
 import { WorkspaceNavigator } from '../workspace-selector';
 import { HaloWorkspaceCard } from './halo-workspace-card';
@@ -48,11 +38,9 @@ import {
   workspaceAndUserWrapper,
   workspaceWrapper,
 } from './index.css';
-import { InviteMembersButton } from './invite-members-button';
 import { AppSidebarJournalButton } from './journal-button';
 import { NotificationButton } from './notification-button';
 import { SidebarAudioPlayer } from './sidebar-audio-player';
-import { TemplateDocEntrance } from './template-doc-entrance';
 import { TrashButton } from './trash-button';
 import { UpdaterButton } from './updater-button';
 import UserInfo from './user-info';
@@ -235,35 +223,21 @@ export const RootAppSidebar = memo((): ReactElement => {
             </span>
           </MenuItem>
         )}
-      </SidebarContainer>
-      <SidebarScrollableContainer>
-        <NavigationPanelFavorites />
-        <NavigationPanelOrganize />
-        <NavigationPanelMigrationFavorites />
-        <NavigationPanelTags />
-        <NavigationPanelCollections />
-        <CollapsibleSection
-          path={['others']}
-          title={t['com.affine.rootAppSidebar.others']()}
-          contentStyle={{ padding: '6px 8px 0 8px' }}
+        <TrashButton />
+        <MenuItem
+          data-testid="slider-bar-import-button"
+          icon={<ImportIcon />}
+          onClick={onOpenImportModal}
         >
-          <TrashButton />
-          <MenuItem
-            data-testid="slider-bar-import-button"
-            icon={<ImportIcon />}
-            onClick={onOpenImportModal}
-          >
-            <span data-testid="import-modal-trigger">{t['Import']()}</span>
-          </MenuItem>
-          <InviteMembersButton />
-          <TemplateDocEntrance />
-          <ExternalMenuLinkItem
-            href="https://affine.pro/blog?tag=Release+Note"
-            icon={<JournalIcon />}
-            label={t['com.affine.app-sidebar.learn-more']()}
-          />
-        </CollapsibleSection>
-      </SidebarScrollableContainer>
+          <span data-testid="import-modal-trigger">{t['Import']()}</span>
+        </MenuItem>
+      </SidebarContainer>
+      {/* HALO (Cam, 7 Oct): no Favorites, Organize, Tags, Collections or
+          Others sections ("we dont need to see this"). Docs are reached through
+          All docs, search and journals; Trash and Import, which lived under
+          Others, are plain rows above. The empty scroll area keeps the bottom
+          group at the bottom. */}
+      <SidebarScrollableContainer>{null}</SidebarScrollableContainer>
       <SidebarContainer className={bottomContainer}>
         <SidebarAudioPlayer />
         {/* Inside HALO there is no app to download: HALO is the app. */}

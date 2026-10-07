@@ -10,7 +10,6 @@ import {
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
 import { DocsService } from '@affine/core/modules/doc';
 import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/favorite';
-import { GuardService } from '@affine/core/modules/permissions';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { useI18n } from '@affine/i18n';
 import track from '@affine/track';
@@ -26,6 +25,7 @@ import {
 import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useContext } from 'react';
 
+import { useGuard } from '../../guard';
 import { useBlockSuiteMetaHelper } from '../../hooks/affine/use-block-suite-meta-helper';
 import { IsFavoriteIcon } from '../../pure/icons';
 import { DocExplorerContext } from '../context';
@@ -161,9 +161,12 @@ const MoveToTrash = ({ docId }: DocOperationProps) => {
   const docsService = useService(DocsService);
   const { openConfirmModal } = useConfirmModal();
   const doc = useLiveData(docsService.list.doc$(docId));
-  const guardService = useService(GuardService);
-
-  const canTrash = useLiveData(guardService.can$('Doc_Trash', docId));
+  // useGuard, not guardService.can$: can$ only reads permissions something else
+  // already loaded and never asks the server, so on a doc nobody had opened this
+  // session it stayed undefined and the item was greyed even for a doc Manager
+  // (HALO grants admins Manager on every doc). useGuard revalidates this doc's
+  // Doc_Trash when the menu opens, as the doc page's own menu does.
+  const canTrash = useGuard('Doc_Trash', docId);
 
   const onMoveToTrash = useCallback(() => {
     if (!doc) {
@@ -199,9 +202,9 @@ const MoveToTrash = ({ docId }: DocOperationProps) => {
   );
 
   // The server decides Doc_Trash: it needs the Manager role on this doc, which
-  // its owner has and a workspace owner or admin inherits. HALO staff join Docs
-  // as collaborators, so on someone else's doc the action is refused; say so
-  // rather than leave a silent grey item.
+  // its owner has, a workspace owner or admin inherits, and HALO grants people
+  // with roles.manage. The reason only shows once the server has said no
+  // (false); while the answer loads (undefined) the item is just disabled.
   if (canTrash !== false) return item;
   return (
     <Tooltip content={HALO_TRASH_DENIED_REASON} side="left">
