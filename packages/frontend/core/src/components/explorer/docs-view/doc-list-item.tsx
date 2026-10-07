@@ -11,6 +11,7 @@ import {
   WorkbenchLink,
   WorkbenchService,
 } from '@affine/core/modules/workbench';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import type { AffineDNDData } from '@affine/core/types/dnd';
 import { useI18n } from '@affine/i18n';
 import track from '@affine/track';
@@ -406,6 +407,7 @@ const cardMoreMenuContentOptions = {
 export const CardViewDoc = ({ docId }: DocListItemProps) => {
   const t = useI18n();
   const contextValue = useContext(DocExplorerContext);
+  const view = useLiveData(contextValue.view$) ?? 'grid';
   const selectMode = useLiveData(contextValue.selectMode$);
   const docsService = useService(DocsService);
   const doc = useLiveData(docsService.list.doc$(docId));
@@ -417,10 +419,13 @@ export const CardViewDoc = ({ docId }: DocListItemProps) => {
   const [coverPositionX, setCoverPositionX] = useState(50);
   const [coverPositionY, setCoverPositionY] = useState(50);
   const [coverZoom, setCoverZoom] = useState(1.2);
-  const coverUrl = useCoverImageUrl(
-    docMeta.headerImage,
-    doc?.blockSuiteDoc?.blobSync
-  );
+  // A gallery card has only the doc's record, not an opened editor doc, so the
+  // cover blob is read from the workspace's blob store (the same store the
+  // editor's blobSync writes it to). Reading it through `doc.blockSuiteDoc`
+  // always gave undefined here, so covered docs showed a plain card.
+  const workspaceBlobs =
+    useService(WorkspaceService).workspace.docCollection.blobSync;
+  const coverUrl = useCoverImageUrl(docMeta.headerImage, workspaceBlobs);
 
   useEffect(() => {
     const x = docMeta.headerImagePositionX ?? 50;
@@ -492,7 +497,7 @@ export const CardViewDoc = ({ docId }: DocListItemProps) => {
         event.currentTarget.releasePointerCapture(event.pointerId);
       }
       const { x, y } = coverPositionRef.current;
-      doc?.record.setMeta({
+      doc?.setMeta({
         headerImagePosition: y,
         headerImagePositionX: x,
         headerImagePositionY: y,
@@ -509,7 +514,7 @@ export const CardViewDoc = ({ docId }: DocListItemProps) => {
         Math.max(1, Number((coverZoom + delta).toFixed(1)))
       );
       setCoverZoom(nextZoom);
-      doc?.record.setMeta({ headerImageZoom: nextZoom });
+      doc?.setMeta({ headerImageZoom: nextZoom });
     },
     [coverZoom, doc, stopCardEvent]
   );
@@ -540,7 +545,11 @@ export const CardViewDoc = ({ docId }: DocListItemProps) => {
         />
       }
     >
-      <li className={styles.cardViewRoot}>
+      <li
+        className={styles.cardViewRoot}
+        data-view={view}
+        data-has-cover={docMeta.headerImage && coverUrl ? true : undefined}
+      >
         <DragHandle id={docId} className={styles.cardDragHandle} />
         {docMeta.headerImage && coverUrl ? (
           <div

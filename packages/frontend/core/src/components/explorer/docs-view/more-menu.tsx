@@ -4,6 +4,7 @@ import {
   Menu,
   MenuItem,
   type MenuProps,
+  Tooltip,
   useConfirmModal,
 } from '@affine/component';
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
@@ -186,7 +187,7 @@ const MoveToTrash = ({ docId }: DocOperationProps) => {
     });
   }, [doc, openConfirmModal, t]);
 
-  return (
+  const item = (
     <MenuItem
       prefixIcon={<DeleteIcon />}
       data-testid="doc-list-operation-trash"
@@ -196,7 +197,21 @@ const MoveToTrash = ({ docId }: DocOperationProps) => {
       {t['com.affine.moveToTrash.title']()}
     </MenuItem>
   );
+
+  // The server decides Doc_Trash: it needs the Manager role on this doc, which
+  // its owner has and a workspace owner or admin inherits. HALO staff join Docs
+  // as collaborators, so on someone else's doc the action is refused; say so
+  // rather than leave a silent grey item.
+  if (canTrash !== false) return item;
+  return (
+    <Tooltip content={HALO_TRASH_DENIED_REASON} side="left">
+      <div data-testid="doc-list-operation-trash-denied">{item}</div>
+    </Tooltip>
+  );
 };
+
+export const HALO_TRASH_DENIED_REASON =
+  "Only this doc's owner or a Docs workspace admin can move it to trash. Ask them to remove it.";
 
 export const MoreMenuContent = (props: DocOperationProps) => {
   return (

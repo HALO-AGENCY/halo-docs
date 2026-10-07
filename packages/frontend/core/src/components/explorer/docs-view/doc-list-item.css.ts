@@ -196,6 +196,11 @@ export const cardViewRoot = style({
   overflow: 'hidden',
   transition: 'box-shadow 0.23s ease, border-color 0.23s ease',
   selectors: {
+    // HALO gallery: compact fixed-height card (see GRID_CARD_HEIGHT).
+    '&[data-view="grid"]': {
+      gap: 6,
+      padding: '12px 14px',
+    },
     [`${root}[data-selected="true"] &`]: {
       vars: {
         '--ring-color': cssVarV2.layer.insideBorder.primaryBorder,
@@ -227,6 +232,15 @@ export const cardViewCoverViewport = style({
   overflow: 'hidden',
   borderBottom: `0.5px solid ${cssVarV2.layer.insideBorder.border}`,
   selectors: {
+    // In the compact gallery card the cover takes whatever height is left
+    // above the title and footer, cropped to fill (object-fit: cover).
+    [`${cardViewRoot}[data-view="grid"] &`]: {
+      width: 'calc(100% + 28px)',
+      height: 'auto',
+      minHeight: 48,
+      flex: '1 1 auto',
+      margin: '-12px -14px 2px',
+    },
     '&[data-adjusting]': {
       zIndex: 2,
       cursor: 'grab',
@@ -247,6 +261,12 @@ export const cardViewCover = style({
   transformOrigin: 'center',
   willChange: 'transform, object-position',
   pointerEvents: 'none',
+  selectors: {
+    [`${cardViewRoot}[data-view="grid"] &`]: {
+      position: 'absolute',
+      inset: 0,
+    },
+  },
 });
 export const cardCoverControls = style({
   position: 'absolute',
@@ -308,6 +328,11 @@ export const cardViewIcon = style({
   fontSize: 24,
   color: cssVarV2.icon.primary,
   lineHeight: 0,
+  selectors: {
+    [`${cardViewRoot}[data-view="grid"] &`]: {
+      fontSize: 20,
+    },
+  },
 });
 export const cardViewTitle = style({
   fontSize: 18,
@@ -321,6 +346,12 @@ export const cardViewTitle = style({
   textOverflow: 'ellipsis',
   overflow: 'hidden',
   whiteSpace: 'nowrap',
+  selectors: {
+    [`${cardViewRoot}[data-view="grid"] &`]: {
+      fontSize: 16,
+      lineHeight: '24px',
+    },
+  },
 });
 export const cardPreviewContainer = style({
   width: '100%',
@@ -335,6 +366,17 @@ export const cardPreviewContainer = style({
   display: '-webkit-box',
   WebkitBoxOrient: 'vertical',
   WebkitLineClamp: 4,
+  selectors: {
+    [`${cardViewRoot}[data-view="grid"] &`]: {
+      flexGrow: 0,
+      minHeight: 0,
+      WebkitLineClamp: 2,
+    },
+    // With a cover the compact card shows cover, title and footer only.
+    [`${cardViewRoot}[data-view="grid"][data-has-cover] &`]: {
+      display: 'none',
+    },
+  },
 });
 export const cardViewCheckbox = style({
   width: 20,

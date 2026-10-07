@@ -76,6 +76,11 @@ const GroupHeader = memo(function GroupHeader({
 });
 
 const ratios = [1.26, 1.304, 1.13, 1.391, 1.521];
+// HALO: gallery (grid) cards have one fixed, compact height so three rows fit
+// in a laptop-sized window, whatever the column width. Title, one preview line
+// pair and the footer fit; a cover fills the space above the title instead.
+const GRID_CARD_HEIGHT = 140;
+const GRID_CARD_GAP = 16;
 const calcCardRatioById = (id: string) => {
   if (!id) {
     return ratios[0];
@@ -145,10 +150,17 @@ export const DocsExplorer = ({
               height: 42,
             } satisfies MasonryItem;
           }
+          if (view === 'grid') {
+            return {
+              id: docId,
+              Component: DocListItemComponent,
+              height: GRID_CARD_HEIGHT,
+            } satisfies MasonryItem;
+          }
           return {
             id: docId,
             Component: DocListItemComponent,
-            ratio: view === 'grid' ? ratios[0] : calcCardRatioById(docId),
+            ratio: calcCardRatioById(docId),
           } satisfies MasonryItem;
         }),
       } satisfies MasonryGroup;
@@ -252,8 +264,22 @@ export const DocsExplorer = ({
       <Masonry
         className={className}
         items={masonryItems}
-        gapY={BUILD_CONFIG.isMobileEdition ? 12 : view === 'list' ? 12 : 24}
-        gapX={BUILD_CONFIG.isMobileEdition ? 12 : 24}
+        gapY={
+          BUILD_CONFIG.isMobileEdition
+            ? 12
+            : view === 'list'
+              ? 12
+              : view === 'grid'
+                ? GRID_CARD_GAP
+                : 24
+        }
+        gapX={
+          BUILD_CONFIG.isMobileEdition
+            ? 12
+            : view === 'grid'
+              ? GRID_CARD_GAP
+              : 24
+        }
         groupsGap={12}
         groupHeaderGapWithItems={12}
         columns={view === 'list' ? 1 : undefined}
