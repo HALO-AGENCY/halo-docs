@@ -209,7 +209,7 @@ export const RootAppSidebar = memo((): ReactElement => {
           <AddPageButton />
         </div>
         <AllDocsButton />
-        <AppSidebarJournalButton />
+        {nav ? null : <AppSidebarJournalButton />}
         {sessionStatus === 'authenticated' && !nav && <NotificationButton />}
         <AIChatButton />
         {nav ? null : (

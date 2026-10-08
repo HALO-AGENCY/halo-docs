@@ -1,3 +1,7 @@
+import {
+  HaloExplorerHeader,
+  isHaloHosted,
+} from '@affine/core/components/explorer/header/halo-header';
 import { IconButton, type MenuProps } from '@affine/component';
 import { usePageHelper } from '@affine/core/blocksuite/block-suite-page-list/utils';
 import { ExplorerDisplayMenuButton } from '@affine/core/components/explorer/display-menu';
@@ -82,37 +86,41 @@ export const AllDocsHeader = ({
     });
   }, [workspaceDialogService, handleOpenDocs]);
 
+  const actions = (
+    <div className={styles.actions}>
+      <ViewToggle view={view} onViewChange={onViewChange} />
+      <ExplorerDisplayMenuButton
+        menuProps={menuProps}
+        displayPreference={displayPreference}
+        onDisplayPreferenceChange={onDisplayPreferenceChange}
+      />
+      <PageListNewPageButton
+        size="small"
+        onCreateEdgeless={e => createEdgeless({ at: inferOpenMode(e) })}
+        onCreatePage={e => createPage('page', { at: inferOpenMode(e) })}
+        onCreateDoc={e => createPage(undefined, { at: inferOpenMode(e) })}
+        onImportFile={onImportFile}
+        data-testid="new-page-button-trigger"
+      >
+        <span className={styles.newPageButtonLabel}>{t['New Page']()}</span>
+      </PageListNewPageButton>
+      <IconButton
+        size="20"
+        tooltip={t['com.affine.workspaceSubPath.trash']()}
+        aria-label={t['com.affine.workspaceSubPath.trash']()}
+        data-testid="all-docs-trash-button"
+        onClick={() => workbench.openTrash()}
+      >
+        <DeleteIcon />
+      </IconButton>
+    </div>
+  );
+  if (isHaloHosted())
+    return <HaloExplorerHeader active="docs">{actions}</HaloExplorerHeader>;
   return (
     <div className={styles.header}>
       <ExplorerNavigation active="docs" />
-
-      <div className={styles.actions}>
-        <ViewToggle view={view} onViewChange={onViewChange} />
-        <ExplorerDisplayMenuButton
-          menuProps={menuProps}
-          displayPreference={displayPreference}
-          onDisplayPreferenceChange={onDisplayPreferenceChange}
-        />
-        <PageListNewPageButton
-          size="small"
-          onCreateEdgeless={e => createEdgeless({ at: inferOpenMode(e) })}
-          onCreatePage={e => createPage('page', { at: inferOpenMode(e) })}
-          onCreateDoc={e => createPage(undefined, { at: inferOpenMode(e) })}
-          onImportFile={onImportFile}
-          data-testid="new-page-button-trigger"
-        >
-          <span className={styles.newPageButtonLabel}>{t['New Page']()}</span>
-        </PageListNewPageButton>
-        <IconButton
-          size="20"
-          tooltip={t['com.affine.workspaceSubPath.trash']()}
-          aria-label={t['com.affine.workspaceSubPath.trash']()}
-          data-testid="all-docs-trash-button"
-          onClick={() => workbench.openTrash()}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </div>
+      {actions}
     </div>
   );
 };

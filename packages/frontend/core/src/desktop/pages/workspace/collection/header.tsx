@@ -16,6 +16,7 @@ export const CollectionDetailHeader = ({
 }) => {
   return (
     <Header
+      haloExplorerTab="collections"
       right={
         <FlexWrapper gap={16}>
           <ViewToggle

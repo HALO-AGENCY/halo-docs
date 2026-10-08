@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 
 export const workbenchRoutes = [
+  { path: '/tasks', lazy: () => import('./pages/workspace/tasks') },
   {
     path: '/chat',
     lazy: () => import('./pages/workspace/chat/index'),

@@ -1,3 +1,5 @@
+import { isHaloHosted } from '@affine/core/utils/halo-docs-host';
+import { Navigate } from 'react-router-dom';
 import {
   Button,
   WeekDatePicker,
@@ -155,6 +157,14 @@ export const JournalsPageWithConfirmation = () => {
   );
 };
 
-export const Component = () => {
+const NativeComponent = () => {
   return <JournalsPageWithConfirmation />;
 };
+
+export function Component() {
+  return isHaloHosted() ? (
+    <Navigate to="/tasks" replace />
+  ) : (
+    <NativeComponent />
+  );
+}

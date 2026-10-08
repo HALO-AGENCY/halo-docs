@@ -14,6 +14,7 @@ export const TagDetailHeader = ({
 }) => {
   return (
     <Header
+      haloExplorerTab="tags"
       left={<ExplorerNavigation active={'tags'} />}
       right={
         <ExplorerDisplayMenuButton

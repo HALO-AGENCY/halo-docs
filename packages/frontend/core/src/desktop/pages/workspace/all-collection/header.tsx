@@ -15,6 +15,7 @@ export const AllCollectionHeader = ({
 }) => {
   return (
     <Header
+      haloExplorerTab="collections"
       right={
         <IconButton
           size="16"

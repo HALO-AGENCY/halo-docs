@@ -2,5 +2,10 @@ import { ExplorerNavigation } from '@affine/core/components/explorer/header/navi
 import { Header } from '@affine/core/components/pure/header';
 
 export const AllTagHeader = () => {
-  return <Header left={<ExplorerNavigation active={'tags'} />} />;
+  return (
+    <Header
+      haloExplorerTab="tags"
+      left={<ExplorerNavigation active={'tags'} />}
+    />
+  );
 };

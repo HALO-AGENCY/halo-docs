@@ -14,9 +14,11 @@ import { useViewPosition } from './use-view-position';
 import { ViewBodyTarget, ViewHeaderTarget } from './view-islands';
 
 const isHaloDocsEmbedded =
-  (globalThis as typeof globalThis & {
-    __HALO_DOCS_COMPILED_PACKAGE__?: boolean;
-  }).__HALO_DOCS_COMPILED_PACKAGE__ === true;
+  (
+    globalThis as typeof globalThis & {
+      __HALO_DOCS_COMPILED_PACKAGE__?: boolean;
+    }
+  ).__HALO_DOCS_COMPILED_PACKAGE__ === true;
 
 export interface Props {
   route: {
@@ -65,6 +67,7 @@ export const RouteContainer = () => {
     <div className={styles.root}>
       <div
         className={styles.header}
+        data-halo-explorer-header={isHaloDocsEmbedded || undefined}
         data-show-switch={showSwitch && !leftSidebarOpen}
       >
         {showSwitch && (
